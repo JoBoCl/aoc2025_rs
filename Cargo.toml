@@ -8,3 +8,5 @@ solver = { git = "https://github.com/JoBoCl/solver", version = "0.2.0" }
 read = { git = "https://github.com/JoBoCl/read", version = "0.1.0" }
 clap = { version = "4.5.53", features = ["derive"] }
 anyhow = "1.0.100"
+itertools = "0.14.0"
+scanf = "2.0.0"

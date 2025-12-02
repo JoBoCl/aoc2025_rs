@@ -12,7 +12,7 @@ impl SolverToAny for Day00 {
 
 impl Day00 {
     pub fn try_create(
-        _input: Box<(dyn Iterator<Item = String>)>,
+        _input: Box<dyn Iterator<Item = String>>,
     ) -> anyhow::Result<Box<dyn Solver>> {
         Ok(Box::new(Day00 {}))
     }
