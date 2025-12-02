@@ -76,7 +76,8 @@ impl Solver for Day01 {
                 Instruction::Left(n) if *n < position => {
                     position -= n;
                 }
-                Instruction::Left(n) => { // n >= position
+                Instruction::Left(n) => {
+                    // n >= position
                     let mut pos = position;
                     let mut i = 0;
                     while i < *n {
