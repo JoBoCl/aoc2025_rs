@@ -2,7 +2,9 @@ extern crate test;
 
 use solver::{Solver, SolverToAny};
 
-pub struct Day03 {}
+pub struct Day03 {
+    joltages: Vec<Vec<u8>>,
+}
 
 impl SolverToAny for Day03 {
     fn as_any(&self) -> &dyn std::any::Any {
@@ -11,18 +13,47 @@ impl SolverToAny for Day03 {
 }
 
 impl Day03 {
-    pub fn try_create(_input: Box<dyn Iterator<Item = String>>) -> anyhow::Result<Box<dyn Solver>> {
-        Ok(Box::new(Day03 {}))
+    pub fn try_create(input: Box<dyn Iterator<Item = String>>) -> anyhow::Result<Box<dyn Solver>> {
+        Ok(Box::new(Day03 {
+            joltages: input
+                .map(|line| {
+                    line.chars()
+                        .into_iter()
+                        .map(|c| c as u8 - '0' as u8)
+                        .collect::<Vec<u8>>()
+                })
+                .collect::<Vec<_>>(),
+        }))
+    }
+
+    fn joltages(count: usize, batteries: &[u8]) -> Vec<u8> {
+        if count == 0 {
+            return Vec::new();
+        }
+        let (idx, joltage) = batteries
+                .iter()
+                .enumerate()
+                .rev()
+                .skip(count - 1)
+                .max_by(|l, r| l.1.cmp(r.1))
+                .unwrap();
+        let js = Day03::joltages(count - 1, &batteries[idx+1..]);
+
+        return vec![vec![*joltage], js].concat();
+    }
+
+    fn joltage(batteries: Vec<u8>) -> u64 {
+        batteries.iter().fold(0, |acc,elem| acc * 10 + *elem as u64)
     }
 }
 
 impl Solver for Day03 {
     fn part_one(&self) -> anyhow::Result<String> {
-        Err(anyhow::anyhow! {"Not Implemented yet"})
+        Ok(self.joltages.iter().map(|b| Day03::joltages(2, b)).map(Day03::joltage).sum::<u64>().to_string())
     }
 
     fn part_two(&self) -> anyhow::Result<String> {
-        Err(anyhow::anyhow! {"Not Implemented yet"})
+        Ok(self.joltages.iter().map(|b| Day03::joltages(12, b)).map(Day03::joltage).sum::<u64>().to_string())
     }
 }
 
@@ -40,7 +71,7 @@ mod tests {
             .map(String::from);
 
         let solver = Day03::try_create(Box::new(input)).unwrap();
-        assert! {solver.part_one().is_err()};
+        assert_eq! {solver.part_one()?, "357"};
         Ok(())
     }
 
@@ -51,7 +82,7 @@ mod tests {
             .map(String::from);
 
         let solver = Day03::try_create(Box::new(input)).unwrap();
-        assert! {solver.part_two().is_err()};
+        assert_eq! {solver.part_two()?, "3121910778619"};
         Ok(())
     }
 
@@ -62,8 +93,8 @@ mod tests {
             .map(String::from);
 
         let solver = Day03::try_create(Box::new(input)).unwrap();
-        assert! {solver.part_one().is_err()};
-        assert! {solver.part_two().is_err()};
+        assert_eq! {solver.part_one()?, "17430"};
+        assert_eq! {solver.part_two()?, "171975854269367"};
         Ok(())
     }
 
