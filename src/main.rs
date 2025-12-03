@@ -6,6 +6,7 @@ use clap::Parser;
 mod day00;
 mod day01;
 mod day02;
+mod day03;
 // END_MOD_LIST
 
 use solver::Solver;
@@ -32,6 +33,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         0 => day00::Day00::try_create(input),
         1 => day01::Day01::try_create(input),
         2 => day02::Day02::try_create(input),
+        3 => day03::Day03::try_create(input),
         // END_SOLVER_LIST
         _ => panic! {"Failed to find solver"},
     }?;
