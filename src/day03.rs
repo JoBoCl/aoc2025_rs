@@ -26,9 +26,9 @@ impl Day03 {
         }))
     }
 
-    fn joltages(count: usize, batteries: &[u8]) -> Vec<u8> {
+    fn joltages(count: usize, batteries: &[u8], acc: u64) -> u64 {
         if count == 0 {
-            return Vec::new();
+            return acc;
         }
         let (idx, joltage) = batteries
             .iter()
@@ -37,15 +37,7 @@ impl Day03 {
             .skip(count - 1)
             .max_by(|l, r| l.1.cmp(r.1))
             .unwrap();
-        let js = Day03::joltages(count - 1, &batteries[idx + 1..]);
-
-        return vec![vec![*joltage], js].concat();
-    }
-
-    fn joltage(batteries: Vec<u8>) -> u64 {
-        batteries
-            .iter()
-            .fold(0, |acc, elem| acc * 10 + *elem as u64)
+        return Day03::joltages(count - 1, &batteries[&idx+1..], acc * 10 + (*joltage as u64));
     }
 }
 
@@ -54,8 +46,7 @@ impl Solver for Day03 {
         Ok(self
             .joltages
             .iter()
-            .map(|b| Day03::joltages(2, b))
-            .map(Day03::joltage)
+            .map(|b| Day03::joltages(2, b, 0))
             .sum::<u64>()
             .to_string())
     }
@@ -64,8 +55,7 @@ impl Solver for Day03 {
         Ok(self
             .joltages
             .iter()
-            .map(|b| Day03::joltages(12, b))
-            .map(Day03::joltage)
+            .map(|b| Day03::joltages(12, b, 0))
             .sum::<u64>()
             .to_string())
     }
