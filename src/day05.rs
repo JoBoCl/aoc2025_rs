@@ -137,9 +137,6 @@ impl Day05 {
                 .filter(|nfi| !merged_away.contains(nfi))
                 .collect();
             if !merged {
-                for range in &normalised_fresh_ingredients {
-                    println! {"{range:?}"};
-                }
                 break;
             }
         }
@@ -254,7 +251,7 @@ mod tests {
 
         let solver = Day05::try_create(Box::new(input)).unwrap();
         assert_eq! {solver.part_one()?, "690"};
-        assert_eq! {solver.part_two()?,  "34432362924073"};
+        assert_eq! {solver.part_two()?,  "344323629240733"};
         Ok(())
     }
 
