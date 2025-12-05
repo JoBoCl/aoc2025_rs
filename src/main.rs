@@ -1,4 +1,5 @@
 #![feature(test)]
+#![feature(trait_alias)]
 
 use clap::Parser;
 
