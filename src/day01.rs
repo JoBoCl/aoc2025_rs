@@ -26,13 +26,13 @@ impl TryFrom<String> for Instruction {
 
     fn try_from(value: String) -> anyhow::Result<Instruction> {
         let step = value
-            .trim_start_matches(|c| c == 'L' || c == 'R')
+            .trim_start_matches(['L', 'R'])
             .parse::<u16>()
             .with_context(|| format! {"could not parse {value}"})?;
         if value.starts_with('R') {
-            return Ok(Instruction::Right(step));
+            Ok(Instruction::Right(step))
         } else if value.starts_with('L') {
-            return Ok(Instruction::Left(step));
+            Ok(Instruction::Left(step))
         } else {
             anyhow::bail! {"{value} doesn't start with l or r!"}
         }
@@ -81,7 +81,7 @@ impl Solver for Day01 {
                     let mut pos = position;
                     let mut i = 0;
                     while i < *n {
-                        pos = pos.checked_sub(1).unwrap_or_else(|| 99);
+                        pos = pos.checked_sub(1).unwrap_or(99);
                         if pos == 0 {
                             zeroes += 1;
                         }

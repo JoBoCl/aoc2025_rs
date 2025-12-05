@@ -39,7 +39,7 @@ impl Day02 {
     // 10..100 => 11, 100..1000 => None, 1000..10000 => 101
     fn multiplier(number: &u64) -> Option<u64> {
         let length = number.ilog10(); // 10..100 => 1, 100..1000 => 2, 1000..10000 => 4
-        if length % 2 == 0 {
+        if length.is_multiple_of(2) {
             return None;
         }
         Some(10_u64.pow(1 + length / 2) + 1)
@@ -47,7 +47,7 @@ impl Day02 {
 
     fn repeated_segment(number: &u64) -> bool {
         if let Some(mul) = Day02::multiplier(number) {
-            number % mul == 0
+            number.is_multiple_of(mul)
         } else {
             false
         }
@@ -57,7 +57,7 @@ impl Day02 {
         let s = number.to_string();
         let l = s.len();
         for i in 1..=(l / 2) {
-            if l % i != 0 {
+            if !l.is_multiple_of(i) {
                 continue;
             }
             let chunks = s.chars().chunks(i);
@@ -78,7 +78,7 @@ impl Solver for Day02 {
         Ok(self
             .ranges
             .iter()
-            .flat_map(|range| range.clone().into_iter().filter(Day02::repeated_segment))
+            .flat_map(|range| range.clone().filter(Day02::repeated_segment))
             .sum::<u64>()
             .to_string())
     }
@@ -87,7 +87,7 @@ impl Solver for Day02 {
         Ok(self
             .ranges
             .iter()
-            .flat_map(|range| range.clone().into_iter().filter(Day02::repeated_segments))
+            .flat_map(|range| range.clone().filter(Day02::repeated_segments))
             .sum::<u64>()
             .to_string())
     }

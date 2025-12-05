@@ -75,7 +75,7 @@ impl Day05 {
     ) -> anyhow::Result<Box<dyn Solver>> {
         let mut fresh_ingredients = HashSet::new();
         let mut available_ingredients: Vec<u64> = Vec::new();
-        while let Some(line) = input.next() {
+        for line in input.by_ref() {
             if line.is_empty() {
                 break;
             }
@@ -144,7 +144,7 @@ impl Day05 {
             }
         }
 
-        while let Some(line) = input.next() {
+        for line in input {
             if line.is_empty() {
                 break;
             }
