@@ -16,11 +16,7 @@ impl Day03 {
     pub fn try_create(input: Box<dyn Iterator<Item = String>>) -> anyhow::Result<Box<dyn Solver>> {
         Ok(Box::new(Day03 {
             joltages: input
-                .map(|line| {
-                    line.chars()
-                        .map(|c| c as u8 - b'0')
-                        .collect::<Vec<u8>>()
-                })
+                .map(|line| line.chars().map(|c| c as u8 - b'0').collect::<Vec<u8>>())
                 .collect::<Vec<_>>(),
         }))
     }
