@@ -37,7 +37,11 @@ impl Day03 {
             .skip(count - 1)
             .max_by(|l, r| l.1.cmp(r.1))
             .unwrap();
-        return Day03::joltages(count - 1, &batteries[&idx+1..], acc * 10 + (*joltage as u64));
+        return Day03::joltages(
+            count - 1,
+            &batteries[&idx + 1..],
+            acc * 10 + (*joltage as u64),
+        );
     }
 }
 
