@@ -10,6 +10,7 @@ mod day02;
 mod day03;
 mod day04;
 mod day05;
+mod day06;
 // END_MOD_LIST
 
 use solver::Solver;
@@ -39,6 +40,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         3 => day03::Day03::try_create(input),
         4 => day04::Day04::try_create(input),
         5 => day05::Day05::try_create(input),
+        6 => day06::Day06::try_create(input),
         // END_SOLVER_LIST
         _ => panic! {"Failed to find solver"},
     }?;
