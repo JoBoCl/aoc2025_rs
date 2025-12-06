@@ -119,10 +119,10 @@ impl Day05 {
                 return (true, i);
             }
             if range.start() > ingredient {
-                return (false, i.checked_sub(1).unwrap_or(0));
+                return (false, i.saturating_sub(1));
             }
         }
-        return (false, n);
+        (false, n)
     }
 }
 
