@@ -115,16 +115,18 @@ impl Solver for Day06 {
                 if !is_op {
                     let c = line[i];
                     match c {
-                        b'0'..=b'9' => {number = (number * 10) + (c - b'0') as u64; }
+                        b'0'..=b'9' => {
+                            number = (number * 10) + (c - b'0') as u64;
+                        }
                         b' ' => {}
-                        c => panic!{"did not expect {c}"},
+                        c => panic! {"did not expect {c}"},
                     }
                 } else {
                     match line[i] {
-                        b'*' => { op = Op::Mul },
-                        b'+' => { op = Op::Add },
-                        b' ' => {},
-                        c => panic!{"did not expect {c:?}"},
+                        b'*' => op = Op::Mul,
+                        b'+' => op = Op::Add,
+                        b' ' => {}
+                        c => panic! {"did not expect {c:?}"},
                     }
                 }
             }
