@@ -51,7 +51,7 @@ impl Day07 {
     pub fn try_create(input: Box<dyn Iterator<Item = String>>) -> anyhow::Result<Box<dyn Solver>> {
         Ok(Box::new(Day07 {
             map: input
-                .map(|line| line.chars().map(|c| Space::try_from(c)).try_collect())
+                .map(|line| line.chars().map(Space::try_from).try_collect())
                 .try_collect()?,
         }))
     }
