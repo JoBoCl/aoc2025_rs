@@ -91,8 +91,8 @@ impl Day08 {
     }
 }
 
-const PART_ONE_EXAMPLE_LIMIT: usize = 10;
-const PART_ONE_PUZZLE_LIMIT: usize = 1000;
+const EXAMPLE_LIMIT: usize = 10;
+const PUZZLE_LIMIT: usize = 1000;
 
 struct DSU {
     id: usize,
@@ -102,14 +102,17 @@ struct DSU {
 
 impl DSU {
     fn new(id: usize) -> Self {
-        DSU { id, parent_id: id, size: 1 }
+        DSU {
+            id,
+            parent_id: id,
+            size: 1,
+        }
     }
 
     fn set_parent(&mut self, parent: usize) {
-        print!{"node {} parent {} -> {} --", self.id, self.parent_id, parent};
         self.parent_id = parent;
     }
-    
+
     fn set_size(&mut self, size: usize) {
         self.size = size;
     }
@@ -129,20 +132,16 @@ impl DSF {
         DSF { entries }
     }
 
-    fn merge(&mut self, l: usize, r: usize) -> bool {
-        print!{"starting merge of {l}, {r}: "};
+    fn merge(&mut self, l: usize, r: usize) {
         let mut lp = self.parent(l);
         let mut rp = self.parent(r);
-        
-        // Already equal, nothing to do.
-        print!{"l({lp}) ?= r({rp}) -- "};
-        if lp == rp {
-            println!{"done"};
-            return false;
-        }
-        let (sl, sr) = (self.size(&lp) , self.size(&rp));
 
-        print!{"|l|({sl}) <=> |r|({sr}) -- "};
+        // Already equal, nothing to do.
+        if lp == rp {
+            return;
+        }
+        let (_sl, _sr) = (self.size(&lp), self.size(&rp));
+
         if self.size(&lp) > self.size(&rp) {
             (lp, rp) = (rp, lp);
         }
@@ -154,33 +153,31 @@ impl DSF {
             panic! {"could not find {lp}"}
         };
         self.entries.get_mut(&rp).unwrap().set_size(new_size);
-        println!{"done"};
-        true
     }
 
     fn parent(&self, mut id: usize) -> usize {
         let orig_id = id;
         while let Some(n) = self.entries.get(&id) {
             if n.parent_id == n.id {
-                // println!{"{orig_id} parent = {}", n.id};
                 return n.id;
             }
             id = n.parent_id;
         }
         panic! {"could not find parent for {orig_id}"}
     }
-    
+
     fn size(&self, id: &usize) -> usize {
-        self.entries[id].size
+        let parent = self.parent(*id);
+        self.entries[&parent].size
     }
 }
 
 impl Solver for Day08 {
     fn part_one(&self) -> anyhow::Result<String> {
         let limit = if self.points.len() < 100 {
-            PART_ONE_EXAMPLE_LIMIT
+            EXAMPLE_LIMIT
         } else {
-            PART_ONE_PUZZLE_LIMIT
+            PUZZLE_LIMIT
         };
         let mut dsf = DSF::new(self.points.len());
         let mut connections = self.diffs.clone();
@@ -188,9 +185,8 @@ impl Solver for Day08 {
         while i < limit {
             if let Some(connection) = connections.pop() {
                 let (lid, rid) = (connection.0.l.id, connection.0.r.id);
-                if dsf.merge(lid, rid) {
-                    i += 1;
-                }
+                dsf.merge(lid, rid);
+                i += 1;
             } else {
                 panic! {"not enough pairs!"}
             }
@@ -201,7 +197,6 @@ impl Solver for Day08 {
             let size = dsf.size(&parent);
             parents_by_size.insert(parent, size);
         }
-        // println!{"parents by size: {:?}", parents_by_size.iter().sorted_by_key(|e| e.1).rev().collect_vec()};
         Ok(parents_by_size
             .into_values()
             .sorted()
@@ -212,7 +207,22 @@ impl Solver for Day08 {
     }
 
     fn part_two(&self) -> anyhow::Result<String> {
-        Err(anyhow::anyhow! {"Not Implemented yet"})
+        let mut dsf = DSF::new(self.points.len());
+        let mut connections = self.diffs.clone();
+        let _i = 0;
+        #[allow(unused_assignments)]
+        let (mut lastl, mut lastr) = (self.points.len(), self.points.len());
+        loop {
+            if let Some(connection) = connections.pop() {
+                let (lid, rid) = (connection.0.l.id, connection.0.r.id);
+                dsf.merge(lid, rid);
+                (lastl, lastr) = (lid, rid);
+                if dsf.size(&rid) == self.points.len() {
+                    break;
+                }
+            }
+        }
+        Ok((self.points[lastl].x * self.points[lastr].x).to_string())
     }
 }
 
@@ -241,7 +251,7 @@ mod tests {
             .map(String::from);
 
         let solver = Day08::try_create(Box::new(input)).unwrap();
-        assert! {solver.part_two().is_err()};
+        assert_eq! {solver.part_two()?, "25272"};
         Ok(())
     }
 
@@ -252,8 +262,8 @@ mod tests {
             .map(String::from);
 
         let solver = Day08::try_create(Box::new(input)).unwrap();
-        assert_eq! {solver.part_one()?, ""};
-        assert! {solver.part_two().is_err()};
+        assert_eq! {solver.part_one()?, "140008"};
+        assert_eq! {solver.part_two()?, "9253260633"};
         Ok(())
     }
 
