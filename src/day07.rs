@@ -3,7 +3,7 @@ extern crate test;
 use anyhow::bail;
 use itertools::Itertools;
 use solver::{Solver, SolverToAny};
-use std::collections::{HashMap, HashSet, BTreeSet};
+use std::collections::{BTreeSet, HashMap, HashSet};
 use std::fmt::{Display, Formatter};
 
 pub struct Day07 {
@@ -118,7 +118,7 @@ impl Solver for Day07 {
                     }
                     Some(Space::Empty) => {
                         new_beams.insert(beam);
-                        let prior = routes_to.get(&(beam,y)).unwrap_or(&0);
+                        let prior = routes_to.get(&(beam, y)).unwrap_or(&0);
                         routes_to.insert((beam, y), prior + routes_to[&(beam, y - 1)]);
                     }
                     None => {
