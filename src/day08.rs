@@ -1,8 +1,60 @@
 extern crate test;
 
+use anyhow::Context;
+use itertools::Itertools;
 use solver::{Solver, SolverToAny};
+use std::collections::{BinaryHeap, HashMap};
+use std::cmp::Reverse;
 
-pub struct Day08 {}
+pub struct Day08 {
+    points: Vec<Point>,
+    diffs: BinaryHeap<Reverse<PointDiff>>,
+}
+
+#[derive(Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Clone, Copy)]
+struct Point {
+    id: usize,
+    x: u64,
+    y: u64,
+    z: u64,
+}
+
+#[derive(Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+struct PointDiff {
+    diff: u64,
+    l: Point,
+    r: Point,
+}
+
+static ID: std::sync::atomic::AtomicUsize = 0.into();
+
+impl TryFrom<String> for Point {
+    type Error = anyhow::Error;
+
+    fn try_from(value: String) -> anyhow::Result<Point> {
+        let [sx, sy, sz] = value.splitn(3, ',').collect::<Vec<_>>()[..] else {
+            anyhow::bail! {"could not split {value}"}
+        };
+
+        let x = sx
+            .parse::<u64>()
+            .context(format! {"could not parse {sx}"})?;
+        let y = sy
+            .parse::<u64>()
+            .context(format! {"could not parse {sy}"})?;
+        let z = sz
+            .parse::<u64>()
+            .context(format! {"could not parse {sz}"})?;
+
+        Ok(Point { x, y, z, id: ID.fetch_add(1, std::sync::atomic::Ordering::Relaxed) })
+    }
+}
+
+impl Point {
+    fn diff(&self, other: &Self) -> u64 {
+        self.x.abs_diff(other.x) + self.y.abs_diff(other.y) + self.z.abs_diff(other.z)
+    }
+}
 
 impl SolverToAny for Day08 {
     fn as_any(&self) -> &dyn std::any::Any {
@@ -11,13 +63,55 @@ impl SolverToAny for Day08 {
 }
 
 impl Day08 {
-    pub fn try_create(_input: Box<dyn Iterator<Item = String>>) -> anyhow::Result<Box<dyn Solver>> {
-        Ok(Box::new(Day08 {}))
+    pub fn try_create(input: Box<dyn Iterator<Item = String>>) -> anyhow::Result<Box<dyn Solver>> {
+        let points: Vec<Point> = input.map(Point::try_from).try_collect()?;
+        let mut diffs = BinaryHeap::new();
+        for l in &points {
+            for r in &points {
+                if l == r {
+                    continue;
+                }
+                let diff: u64 = l.diff(r);
+                diffs.push(Reverse(PointDiff{diff , l: *l, r: *r}))
+            }
+        }
+        Ok(Box::new(Day08{ points, diffs}))
+    }
+}
+
+const PART_ONE_EXAMPLE_LIMIT: usize = 10;
+const PART_ONE_PUZZLE_LIMIT: usize = 1000;
+
+struct DSU {
+    id: usize,
+    parent_id: usize,
+}
+
+impl DSU {
+    fn new(id: usize) -> Self {
+        DSU{id, parent_id: id}
+    }
+}
+
+struct DSF {
+    entries: HashMap<usize, DSU>,
+}
+
+impl DSF {
+    fn new(limit: usize)  -> Self {
+        let mut entries = HashMap::new();
+
+        for i in 0_usize..limit {
+            entries.insert(i, DSU::new(i));
+        }
+        DSF{entries}
     }
 }
 
 impl Solver for Day08 {
     fn part_one(&self) -> anyhow::Result<String> {
+        let limit = if self.points.len() < 100 { PART_ONE_EXAMPLE_LIMIT } else { PART_ONE_PUZZLE_LIMIT };
+        let mut dsf = DSF::new(ID.load(std::sync::atomic::Ordering::Relaxed));
         Err(anyhow::anyhow! {"Not Implemented yet"})
     }
 

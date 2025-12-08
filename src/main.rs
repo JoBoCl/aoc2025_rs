@@ -1,5 +1,7 @@
 #![feature(test)]
 #![feature(trait_alias)]
+#![feature(const_convert)]
+#![feature(const_trait_impl)]
 
 use clap::Parser;
 
