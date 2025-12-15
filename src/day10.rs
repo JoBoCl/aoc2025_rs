@@ -1,6 +1,6 @@
 extern crate test;
 
-use z3::{Solver as Z3Solver, ast::Int, Optimize};
+use z3::{Optimize, Solver as Z3Solver, ast::Int};
 
 use solver::{Solver, SolverToAny};
 use std::collections::{HashMap, HashSet, VecDeque};
@@ -75,11 +75,13 @@ impl Machine {
             // if the model is satisfiable, then it will be defined.
             let model = opt.get_model().unwrap();
 
-            return button_vars.iter().filter_map(|v| model.get_const_interp(v))
-                .filter_map(|i| i.as_u64()).sum::<u64>();
-
+            return button_vars
+                .iter()
+                .filter_map(|v| model.get_const_interp(v))
+                .filter_map(|i| i.as_u64())
+                .sum::<u64>();
         }
-        panic!{"must be able to find a solution"};
+        panic! {"must be able to find a solution"};
     }
 
     fn charge_naive(&self) -> usize {
