@@ -18,6 +18,7 @@ mod day08;
 mod day09;
 mod day10;
 mod day11;
+mod day12;
 // END_MOD_LIST
 
 use solver::Solver;
@@ -44,6 +45,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         0 => day00::Day00::try_create(input),
         10 => day10::Day10::try_create(input),
         11 => day11::Day11::try_create(input),
+        12 => day12::Day12::try_create(input),
         1 => day01::Day01::try_create(input),
         2 => day02::Day02::try_create(input),
         3 => day03::Day03::try_create(input),
