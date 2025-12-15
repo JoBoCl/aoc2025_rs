@@ -173,14 +173,11 @@ impl Solver for Day09 {
             ];
 
             for p in neighbours {
-                match p {
-                    (Some(nx), Some(ny)) => {
-                        if grid[ny][nx] == '.' {
-                            grid[ny][nx] = '#';
-                            queue.push_back((nx, ny));
-                        }
-                    }
-                    _ => {}
+                if let (Some(nx), Some(ny)) = p
+                    && grid[ny][nx] == '.'
+                {
+                    grid[ny][nx] = '#';
+                    queue.push_back((nx, ny));
                 }
             }
         }
