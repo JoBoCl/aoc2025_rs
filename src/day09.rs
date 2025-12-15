@@ -1,18 +1,13 @@
 extern crate test;
 
 use std::{
-    collections::{BTreeSet, HashMap, HashSet},
-    ops::RangeInclusive,
+    collections::VecDeque,
 };
 
 use solver::{Solver, SolverToAny};
 
 pub struct Day09 {
     points: Vec<Point>,
-    min_x: u64,
-    min_y: u64,
-    max_x: u64,
-    max_y: u64,
 }
 
 #[derive(Eq, PartialEq, Hash, Debug, Clone, Copy)]
@@ -36,22 +31,6 @@ impl Point {
     fn rect(&self, other: &Self) -> u64 {
         (self.x.abs_diff(other.x) + 1) * (self.y.abs_diff(other.y) + 1)
     }
-
-    fn horizontal(&self, other: &Self) -> bool {
-        self.y == other.y
-    }
-
-    fn between(&self, other: &Self) -> Vec<Point> {
-        if self.horizontal(other) {
-            let min = self.x.min(other.x);
-            let max = self.x.max(other.x);
-            (min..=max).map(|x| Point { x, y: self.y }).collect()
-        } else {
-            let min = self.y.min(other.y);
-            let max = self.y.max(other.y);
-            (min..=max).map(|x| Point { x, y: self.y }).collect()
-        }
-    }
 }
 
 impl SolverToAny for Day09 {
@@ -66,69 +45,26 @@ impl Day09 {
             .filter(|s| !s.is_empty())
             .map(Point::from)
             .collect::<Vec<_>>();
-        let mut min_x = u64::MAX;
-        let mut min_y = u64::MAX;
-        let mut max_x = 0;
-        let mut max_y = 0;
-        for point in &points {
-            min_x = point.x.min(min_x);
-            min_y = point.y.min(min_y);
-            max_x = point.x.max(max_x);
-            max_y = point.y.max(max_y);
-        }
-        println! {
-        "puzzle size: x: {}-{}, y: {}-{}, area: {}",
-        min_x, max_x, min_y, max_y,
-        Point{x: min_x, y: min_y}.rect(&Point{x: max_x, y: max_y})};
-
         Ok(Box::new(Day09 {
             points,
-            min_x,
-            min_y,
-            max_x,
-            max_y,
         }))
     }
 
-    fn is_line_in_shape(
-        &self,
-        start: &Point,
-        end: &Point,
-        vertical: &HashMap<&u64, Vec<RangeInclusive<u64> > >, // Vertical lines
-        horizontal: &HashMap<&u64, Vec<RangeInclusive<u64> > >, // Horizontal lines
-    ) -> bool {
-        // A line is within the shape if it is a series of points within a
-        // line, optionally followed by a series of points outside the line and
-        // a series of points within another line.
-
-        if start.horizontal(end) {
-            let line_segments = &horizontal[&start.y];
-            let range = range(start.x, end.x);
-            let i = range.start();
-            let mut j = 0;
-            while i < range.end() {
-                if line_segments[j].start() < i {
-                    j += 1;
-                } else if line_segments[j].start() == i {
-
-                } else if line_segments[j].end() == i {
-
-                }
+    fn clockwise_area(&self) -> i64 {
+        let mut area = 0_i64;
+        for i in 1..self.points.len() {
+            let a = &self.points[i - 1];
+            let b = &self.points[i];
+            if a.x != b.x {
+                area -= (a.y as i64) * (b.x as i64 - a.x as i64);
             }
-            return i == range.end();
-        } else {
-            let line_segments = &vertical[&start.x];
-            let range = range(start.y, end.y);
         }
-        false
+        area
     }
 }
 
-fn range<T: Ord + Copy>(l: T, r: T) -> RangeInclusive<T> {
-    let min = l.min(r);
-    let max = l.max(r);
-    min..=max
-}
+static GRID_LIMIT: usize = 100000;
+static CONDENSED_GRID_LIMIT: usize = 1000;
 
 impl Solver for Day09 {
     fn part_one(&self) -> anyhow::Result<String> {
@@ -143,56 +79,142 @@ impl Solver for Day09 {
     }
 
     fn part_two(&self) -> anyhow::Result<String> {
-        let mut vertical = HashMap::new();
-        let mut horizontal = HashMap::new();
-        for i in 0..self.points.len() {
-            let j = (i + 1) % self.points.len();
-            if self.points[i].horizontal(&self.points[j]) {
-                horizontal
-                    .entry(&self.points[i].y)
-                    .or_insert(Vec::new())
-                    .push(range(self.points[i].x, self.points[j].x));
+        let mut xs = vec![0; GRID_LIMIT];
+        let mut ys = vec![0; GRID_LIMIT];
+        let mut grid = vec![vec!['.'; CONDENSED_GRID_LIMIT]; CONDENSED_GRID_LIMIT];
+
+        let n = self.points.len();
+        for i in 0..n {
+            let p = &self.points[i];
+            xs[p.x as usize] = 1;
+            ys[p.y as usize] = 1;
+        }
+
+        let mut size_x = 0;
+        let mut size_y = 0;
+
+        for i in 0..GRID_LIMIT {
+            if xs[i] == 1 {
+                xs[i] = size_x + 1;
+                size_x += 2;
             } else {
-                vertical
-                    .entry(&self.points[i].x)
-                    .or_insert(Vec::new())
-                    .push(range(self.points[i].y, self.points[j].y));
+                xs[i] = size_x;
+            }
+            if ys[i] == 1 {
+                ys[i] = size_y + 1;
+                size_y += 2;
+            } else {
+                ys[i] = size_y;
             }
         }
-        let points_hash = &self.points.iter().collect::<HashSet<_>>();
-        let mut largest_area = 0;
-        for i in 0..self.points.len() {
-            // Skip the next point - the area is just a straight line
-            for j in i + 2..self.points.len() {
-                let opposite_1 = Point {
-                    x: self.points[i].x,
-                    y: self.points[j].y,
-                };
-                let opposite_2 = Point {
-                    x: self.points[j].x,
-                    y: self.points[i].y,
-                };
+        size_x += 1;
+        size_y += 1;
+        assert! {size_x <= CONDENSED_GRID_LIMIT};
+        assert! {size_y <= CONDENSED_GRID_LIMIT};
 
-                // if [
-                //     &self.points[i],
-                //     &opposite_1,
-                //     &self.points[j],
-                //     &opposite_2
-                // ].iter().all(|p| self.is_point_in_shape(p, &vertical, &horizontal, &mut seen)) {
-                //     largest_area = largest_area.max(self.points[i].rect(&self.points[j]));
-                // }
+        let is_clockwise = self.clockwise_area() > 0;
 
-                if [
-                    (self.points[i],&opposite_1),
-                    (opposite_1, &self.points[j]),
-                    (self.points[j], &opposite_2),
-                    (opposite_2, &self.points[i]),
-                ]
-                .iter()
-                .all(|(l,r)| self.is_line_in_shape(l, r, &vertical, &horizontal))
-                {
-                    largest_area = largest_area.max(self.points[i].rect(&self.points[j]));
+        for i in 0..n {
+            let a = &self.points[i.checked_sub(1).unwrap_or(n - 1)];
+            let b = &self.points[i];
+            if a.x == b.x {
+                let x = xs[a.x as usize];
+                let ay = ys[a.y as usize];
+                let by = ys[b.y as usize];
+                let step: isize = if ay <= by { 1 } else { -1 };
+                let end = by.strict_add_signed(step);
+                let inside_offset: isize = if is_clockwise { -step } else { step };
+                let mut y = ay;
+                let xoff = x.strict_add_signed(inside_offset);
+                while y != end {
+                    grid[y][x] = '#';
+                    if grid[y][xoff] == '.' {
+                        grid[y][xoff] = '!';
+                    }
+                    y = y.strict_add_signed(step);
                 }
+            } else {
+                let y = ys[a.y as usize];
+                let ax = xs[a.x as usize];
+                let bx = xs[b.x as usize];
+                let step: isize = if ax <= bx { 1 } else { -1 };
+                let end = bx.strict_add_signed(step);
+                let inside_offset: isize = if is_clockwise { step } else { -step };
+                let mut x = ax;
+                while x != end {
+                    grid[y][x] = '#';
+                    let yoff = y.strict_add_signed(inside_offset);
+                    if grid[yoff][x] == '.' {
+                        grid[yoff][x] = '!';
+                    }
+                    x = x.strict_add_signed(step);
+                }
+            }
+        }
+
+        let mut queue = VecDeque::new();
+        for y in 0..size_y {
+            for x in 0..size_x {
+                if grid[y][x] == '!' {
+                    grid[y][x] = '#';
+                    queue.push_back((x, y));
+                }
+            }
+        }
+
+        while let Some((x, y)) = queue.pop_front() {
+            let neighbours = vec![
+                (Some(x), y.checked_sub(1)),
+                (
+                    Some(x),
+                    y.checked_add(1).filter(|y| *y < CONDENSED_GRID_LIMIT),
+                ),
+                (x.checked_sub(1), Some(y)),
+                (
+                    x.checked_add(1).filter(|x| *x < CONDENSED_GRID_LIMIT),
+                    Some(y),
+                ),
+            ];
+
+            for p in neighbours {
+                match p {
+                    (Some(nx), Some(ny)) => {
+                        if grid[ny][nx] == '.' {
+                            grid[ny][nx] = '#';
+                            queue.push_back((nx, ny));
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        }
+
+        let mut largest_area = 0;
+        for i in 0..n {
+            let a = &self.points[i];
+            let ax = xs[a.x as usize];
+            let ay = ys[a.y as usize];
+            'inner: for j in (i + 1)..n {
+                let b = &self.points[j];
+                let bx = xs[b.x as usize];
+                let by = ys[b.y as usize];
+                let min_x = if ax < bx { ax } else { bx };
+                let max_x = if ax < bx { bx } else { ax };
+                let min_y = if ay < by { ay } else { by };
+                let max_y = if ay < by { by } else { ay };
+
+                for y in min_y..=max_y {
+                    if grid[y][min_x] != '#' || grid[y][max_x] != '#' {
+                        continue 'inner;
+                    }
+                }
+                for x in min_x..=max_x {
+                    if grid[min_y][x] != '#' || grid[max_y][x] != '#' {
+                        continue 'inner;
+                    }
+                }
+
+                largest_area = largest_area.max(a.rect(b));
             }
         }
         Ok(largest_area.to_string())
@@ -218,7 +240,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn it_works_on_the_other_example() -> Result<(), Box<dyn Error>> {
         let input = include_str!("../puzzles/day09/example.input")
             .lines()
@@ -237,8 +258,7 @@ mod tests {
 
         let solver = Day09::try_create(Box::new(input)).unwrap();
         assert_eq! {solver.part_one()?, "4755429952"};
-        // 452333056 too low
-        // assert_eq! {solver.part_two()?, ""};
+        assert_eq! {solver.part_two()?, "1429596008"};
         Ok(())
     }
 
@@ -265,7 +285,6 @@ mod tests {
     }
 
     #[bench]
-    #[ignore]
     fn bench_two(b: &mut Bencher) {
         let input = include_str!("../puzzles/day09/joshua.input")
             .lines()
