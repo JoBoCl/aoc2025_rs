@@ -17,7 +17,7 @@ struct Machine {
 }
 
 impl Machine {
-    fn initialise(&self) -> usize {
+    fn initialise_naive(&self) -> usize {
         let mut states = VecDeque::new();
         states.push_back((0, vec![false; self.lights.len()]));
 
@@ -37,10 +37,9 @@ impl Machine {
         panic! {"exhausted search space without finding solution"};
     }
 
-    fn charge(&self) -> u64 {
+    fn initialise(&self) -> u64 {
         // represents the number of times that each button is pressed.
         let mut button_vars = Vec::new();
-        let solver = Z3Solver::new();
         let opt = Optimize::new();
 
         let mut lights_to_buttons = HashMap::new();
@@ -57,7 +56,56 @@ impl Machine {
         }
 
         // Want to minimise the total number of button presses.
-        opt.minimize(&button_vars.iter().sum::<Int>());
+        let sum_var = &button_vars.iter().sum::<Int>();
+        opt.minimize(sum_var);
+
+        for light in 0..self.joltages.len() {
+            // Each light's joltage is the sum of the number of times that
+            // relevant buttons were pressed.
+            opt.assert(
+                &lights_to_buttons[&light]
+                    .iter()
+                    .map(|i| &button_vars[*i])
+                    .sum::<Int>()
+                    .modulo(2)
+                    .eq(if self.lights[light] { 1 } else { 0 }),
+            );
+        }
+
+        if opt.check(&[]) == z3::SatResult::Sat {
+            // if the model is satisfiable, then it will be defined.
+            let model = opt.get_model().unwrap();
+
+            return button_vars
+                .iter()
+                .filter_map(|bv| model.get_const_interp(bv))
+                .filter_map(|i| i.as_u64())
+                .sum::<u64>();
+        }
+        panic! {"must be able to find a solution"};
+    }
+
+    fn charge(&self) -> u64 {
+        // represents the number of times that each button is pressed.
+        let mut button_vars = Vec::new();
+        let opt = Optimize::new();
+
+        let mut lights_to_buttons = HashMap::new();
+        for i in 0..self.buttons.len() {
+            button_vars.push(Int::fresh_const(&format! {"button_{i}"}));
+            for light in &self.buttons[i] {
+                lights_to_buttons
+                    .entry(light)
+                    .or_insert(HashSet::new())
+                    .insert(i);
+            }
+            // Buttons can't be pressed a negative number of times.
+            opt.assert(&button_vars[i].ge(0));
+        }
+
+        // Want to minimise the total number of button presses.
+        let sum_var = &button_vars.iter().sum::<Int>();
+        opt.minimize(sum_var);
 
         for light in 0..self.joltages.len() {
             // Each light's joltage is the sum of the number of times that
@@ -77,7 +125,7 @@ impl Machine {
 
             return button_vars
                 .iter()
-                .filter_map(|v| model.get_const_interp(v))
+                .filter_map(|bv| model.get_const_interp(bv))
                 .filter_map(|i| i.as_u64())
                 .sum::<u64>();
         }
@@ -232,7 +280,7 @@ impl Solver for Day10 {
             .machines
             .iter()
             .map(Machine::initialise)
-            .sum::<usize>()
+            .sum::<u64>()
             .to_string())
     }
 
@@ -309,7 +357,6 @@ mod tests {
         b.iter(|| solver.part_one());
     }
 
-    #[ignore]
     #[bench]
     fn bench_two(b: &mut Bencher) {
         let input = include_str!("../puzzles/day10/joshua.input")
