@@ -1,8 +1,6 @@
 extern crate test;
 
-use std::{
-    collections::VecDeque,
-};
+use std::collections::VecDeque;
 
 use solver::{Solver, SolverToAny};
 
@@ -45,9 +43,7 @@ impl Day09 {
             .filter(|s| !s.is_empty())
             .map(Point::from)
             .collect::<Vec<_>>();
-        Ok(Box::new(Day09 {
-            points,
-        }))
+        Ok(Box::new(Day09 { points }))
     }
 
     fn clockwise_area(&self) -> i64 {

@@ -16,6 +16,7 @@ mod day06;
 mod day07;
 mod day08;
 mod day09;
+mod day10;
 // END_MOD_LIST
 
 use solver::Solver;
@@ -40,6 +41,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let solver: Box<dyn Solver> = match flags.day {
         // BEGIN_SOLVER_LIST
         0 => day00::Day00::try_create(input),
+        10 => day10::Day10::try_create(input),
         1 => day01::Day01::try_create(input),
         2 => day02::Day02::try_create(input),
         3 => day03::Day03::try_create(input),
